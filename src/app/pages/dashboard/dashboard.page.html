@@ -1,0 +1,62 @@
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">PANEL DE CONTROL</span>
+    <h1>Hola, {{ auth.userName().split(' ')[0] }} <span class="heading-wave">👋</span></h1>
+    <p class="muted">Bienvenido a tu espacio de trabajo. ¿Qué necesitas gestionar hoy?</p>
+  </div>
+  @if (auth.hasPermission('ORDEN_REGISTRAR')) {
+    <a class="button button-primary" routerLink="/ordenes/nueva"><span>＋</span> Nueva orden</a>
+  }
+</div>
+
+<section class="welcome-banner">
+  <div class="welcome-copy">
+    <span class="eyebrow eyebrow-light">AUTOANDES · GESTIÓN DE TALLER</span>
+    <h2>Todo en marcha,<br />todo bajo control.</h2>
+    <p>Administra el catálogo, los vehículos y cada orden de servicio desde un solo lugar.</p>
+  </div>
+  <div class="welcome-art" aria-hidden="true">
+    <div class="art-ring art-ring-one"></div>
+    <div class="art-ring art-ring-two"></div>
+    <div class="art-car">A<span>✦</span></div>
+    <div class="art-chip">CONTROL<br /><strong>360°</strong></div>
+  </div>
+</section>
+
+<div class="section-title-row">
+  <div><span class="eyebrow">ACCESOS RÁPIDOS</span><h2>Tu operación</h2></div>
+  <span class="role-badge">{{ auth.roles().join(' · ') }}</span>
+</div>
+
+<div class="quick-grid">
+  @if (auth.hasPermission('ORDEN_REGISTRAR')) {
+    <a class="quick-card quick-card-featured" routerLink="/ordenes/nueva">
+      <span class="quick-icon quick-icon-green">＋</span><span class="quick-arrow">↗</span>
+      <strong>Registrar una orden</strong><small>Inicia una nueva atención de servicio.</small>
+    </a>
+  }
+  @if (auth.hasPermission('ORDEN_LEER')) {
+    <a class="quick-card" routerLink="/ordenes">
+      <span class="quick-icon quick-icon-blue">▤</span><span class="quick-arrow">↗</span>
+      <strong>Órdenes de servicio</strong><small>Consulta el historial y su estado.</small>
+    </a>
+  }
+  @if (auth.hasPermission('VEHICULO_LEER')) {
+    <a class="quick-card" routerLink="/vehiculos">
+      <span class="quick-icon quick-icon-amber">▱</span><span class="quick-arrow">↗</span>
+      <strong>Vehículos</strong><small>Revisa vehículos y sus propietarios.</small>
+    </a>
+  }
+  @if (auth.hasPermission('SERVICIO_LEER')) {
+    <a class="quick-card" routerLink="/servicios">
+      <span class="quick-icon quick-icon-violet">◈</span><span class="quick-arrow">↗</span>
+      <strong>Catálogo de servicios</strong><small>Consulta los servicios del taller.</small>
+    </a>
+  }
+  @if (auth.hasPermission('REPORTE_VER')) {
+    <a class="quick-card" routerLink="/reportes">
+      <span class="quick-icon quick-icon-blue">▥</span><span class="quick-arrow">↗</span>
+      <strong>Reporte de ingresos</strong><small>Analiza ingresos por servicio.</small>
+    </a>
+  }
+</div>

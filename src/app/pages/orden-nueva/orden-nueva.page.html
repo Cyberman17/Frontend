@@ -1,0 +1,54 @@
+<div class="page-heading">
+  <div><span class="eyebrow">ATENCIÓN AL CLIENTE</span><h1>Nueva orden</h1><p class="muted">Selecciona un vehículo y agrega los servicios solicitados.</p></div>
+  <a class="button button-quiet" routerLink="/ordenes">Ver órdenes <span>→</span></a>
+</div>
+
+@if (createdOrder) {
+  <div class="alert alert-success order-success" role="status"><span class="success-check">✓</span><span><strong>Orden {{ createdOrder.numero }} registrada correctamente.</strong><small>El total de {{ createdOrder.total | currency:'PEN':'symbol':'1.2-2' }} fue calculado por el servidor.</small></span><a routerLink="/ordenes">Consultar órdenes →</a></div>
+}
+@if (error) { <div class="alert alert-error" role="alert">{{ error }}</div> }
+
+@if (loading) {
+  <div class="content-card loading-state"><span class="spinner"></span> Cargando vehículos…</div>
+} @else {
+  <form [formGroup]="form" (ngSubmit)="submit()" class="order-layout">
+    <div class="order-main">
+      <section class="content-card order-section">
+        <div class="form-section-heading"><span class="step-number">01</span><div><h2>Datos del vehículo</h2><p class="muted">Elige el vehículo que recibirá el servicio.</p></div></div>
+        <div class="form-grid">
+          <div class="form-field form-field-wide"><label for="orderVehicle">Vehículo y propietario</label><select id="orderVehicle" formControlName="vehiculoId"><option [ngValue]="null" disabled>Selecciona un vehículo</option>@for (vehicle of vehiculos; track vehicle.id) { <option [ngValue]="vehicle.id">{{ vehicle.placa }} · {{ vehicle.marca }} {{ vehicle.modelo }} — {{ vehicle.clienteNombre }}</option> }</select>@if (form.controls.vehiculoId.touched && form.controls.vehiculoId.invalid) { <span class="field-error">{{ fieldError('vehiculoId') || 'Selecciona un vehículo.' }}</span> }</div>
+          <div class="form-field"><label for="kilometraje">Kilometraje actual</label><div class="input-suffix"><input id="kilometraje" type="number" min="0" formControlName="kilometraje" placeholder="Ej. 50000" /><span>km</span></div>@if (fieldError('kilometraje') || (form.controls.kilometraje.touched && form.controls.kilometraje.invalid)) { <span class="field-error">{{ fieldError('kilometraje') || 'Ingresa un kilometraje válido.' }}</span> }</div>
+        </div>
+      </section>
+
+      <section class="content-card order-section">
+        <div class="form-section-heading"><span class="step-number">02</span><div><h2>Servicios solicitados</h2><p class="muted">Agrega de 1 a 10 servicios, sin repetir.</p></div><button class="button button-quiet button-small" type="button" [disabled]="lines.length >= 10" (click)="addLine()">＋ Agregar servicio</button></div>
+        <div class="detail-list" formArrayName="detalles">
+          @for (line of lines.controls; track $index; let i = $index) {
+            <div class="detail-row" [formGroupName]="i">
+              <span class="detail-index">{{ (i + 1).toString().padStart(2, '0') }}</span>
+              <div class="form-field detail-service"><label [for]="'service-' + i">Servicio</label><select [id]="'service-' + i" formControlName="servicioId"><option [ngValue]="null" disabled>Selecciona un servicio</option>@for (service of servicios; track service.id) { <option [ngValue]="service.id" [disabled]="serviceUsedInAnotherLine(service.id, i)">{{ service.codigo }} · {{ service.nombre }}</option> }</select>@if (detailFieldError(i, 'servicioId') || (line.controls.servicioId.touched && line.controls.servicioId.invalid)) { <span class="field-error">{{ detailFieldError(i, 'servicioId') || 'Selecciona un servicio.' }}</span> }</div>
+              <div class="form-field detail-quantity"><label [for]="'quantity-' + i">Cantidad</label><input [id]="'quantity-' + i" type="number" min="1" max="5" formControlName="cantidad" />@if (detailFieldError(i, 'cantidad') || (line.controls.cantidad.touched && line.controls.cantidad.invalid)) { <span class="field-error">{{ detailFieldError(i, 'cantidad') || 'Elige una cantidad de 1 a 5.' }}</span> }</div>
+              <div class="detail-subtotal"><small>Subtotal</small><strong>{{ subtotal(line) | currency:'PEN':'symbol':'1.2-2' }}</strong></div>
+              <button class="icon-button danger-icon remove-line" type="button" [disabled]="lines.length <= 1" [attr.aria-label]="'Quitar servicio ' + (i + 1)" title="Quitar servicio" (click)="removeLine(i)">×</button>
+            </div>
+          }
+        </div>
+        @if (fieldError('detalles')) { <span class="field-error">{{ fieldError('detalles') }}</span> }
+        @if (servicios.length === 0) { <div class="inline-note">No hay servicios activos disponibles para registrar.</div> }
+      </section>
+    </div>
+
+    <aside class="order-summary content-card">
+      <span class="eyebrow">RESUMEN DE ATENCIÓN</span>
+      <h2>Tu orden</h2>
+      <div class="summary-metric"><span>Servicios</span><strong>{{ lines.length }}</strong></div>
+      <div class="summary-metric"><span>Vehículo</span><strong class="summary-vehicle">{{ vehiculos.find(v => v.id === form.controls.vehiculoId.value)?.placa || '—' }}</strong></div>
+      <div class="summary-divider"></div>
+      <div class="summary-total"><span>Total estimado</span><strong>{{ total | currency:'PEN':'symbol':'1.2-2' }}</strong></div>
+      <p class="summary-note">El importe final será calculado y confirmado por el servidor.</p>
+      <button class="button button-primary button-wide" type="submit" [disabled]="submitting || servicios.length === 0">{{ submitting ? 'Registrando…' : 'Registrar orden' }} <span>→</span></button>
+      <div class="secure-note"><span>✓</span> Guardado seguro en AutoAndes</div>
+    </aside>
+  </form>
+}

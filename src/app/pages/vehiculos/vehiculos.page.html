@@ -1,0 +1,40 @@
+<div class="page-heading">
+  <div><span class="eyebrow">REGISTRO DE CLIENTES</span><h1>Vehículos</h1><p class="muted">Gestiona los vehículos y consulta quién es su propietario.</p></div>
+  @if (auth.hasPermission('VEHICULO_ESCRIBIR')) { <button class="button button-primary" type="button" (click)="openCreate()"><span>＋</span> Nuevo vehículo</button> }
+</div>
+
+@if (error && !formOpen) { <div class="alert alert-error" role="alert">{{ error }}</div> }
+@if (success) { <div class="alert alert-success" role="status">{{ success }} <button type="button" class="alert-close" (click)="success = ''">×</button></div> }
+
+<section class="content-card">
+  <div class="card-toolbar"><div><h2>Vehículos registrados</h2><p class="muted">{{ vehiculos.length }} vehículos en el sistema</p></div><label class="search-box"><span>⌕</span><input aria-label="Buscar vehículo" placeholder="Buscar placa, marca o cliente…" [value]="search" (input)="search = $any($event.target).value" /></label></div>
+  @if (loading) {
+    <div class="loading-state"><span class="spinner"></span> Cargando vehículos desde la API…</div>
+  } @else if (filteredVehicles.length === 0) {
+    <div class="empty-inline"><span class="empty-icon">▱</span><strong>No hay vehículos para mostrar</strong><small>Prueba otra búsqueda o registra un vehículo nuevo.</small></div>
+  } @else {
+    <div class="table-wrap"><table>
+      <thead><tr><th>VEHÍCULO</th><th>PROPIETARIO</th><th>AÑO</th>@if (auth.hasPermission('VEHICULO_ESCRIBIR')) { <th class="actions-heading">ACCIONES</th> }</tr></thead>
+      <tbody>@for (vehicle of filteredVehicles; track vehicle.id) {
+        <tr><td><div class="vehicle-cell"><span class="vehicle-avatar">▱</span><span><strong>{{ vehicle.placa }}</strong><small>{{ vehicle.marca }} {{ vehicle.modelo }}</small></span></div></td><td><div class="owner-cell"><strong>{{ vehicle.clienteNombre }}</strong><small>Cliente #{{ vehicle.clienteId }}</small></div></td><td>{{ vehicle.anio }}</td>
+          @if (auth.hasPermission('VEHICULO_ESCRIBIR')) { <td class="row-actions"><button class="icon-button" type="button" title="Editar vehículo" aria-label="Editar vehículo" (click)="openEdit(vehicle)">✎</button><button class="icon-button danger-icon" type="button" title="Eliminar vehículo" aria-label="Eliminar vehículo" (click)="remove(vehicle)">⌫</button></td> }
+        </tr>
+      }</tbody>
+    </table></div>
+  }
+</section>
+
+@if (formOpen) {
+  <div class="modal-backdrop" (click)="closeForm()"><section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="vehicle-form-title" (click)="$event.stopPropagation()">
+    <div class="modal-heading"><div><span class="eyebrow">{{ editingId === null ? 'NUEVO REGISTRO' : 'ACTUALIZAR REGISTRO' }}</span><h2 id="vehicle-form-title">{{ editingId === null ? 'Nuevo vehículo' : 'Editar vehículo' }}</h2></div><button class="icon-button" type="button" aria-label="Cerrar" (click)="closeForm()">×</button></div>
+    @if (error) { <div class="alert alert-error" role="alert">{{ error }}</div> }
+    <form class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="form-field"><label for="placa">Placa</label><input id="placa" formControlName="placa" placeholder="ABC-123" autocapitalize="characters" />@if (fieldError('placa') || (form.controls.placa.touched && form.controls.placa.invalid)) { <span class="field-error">{{ fieldError('placa') || 'La placa debe seguir el formato ABC-123.' }}</span> }</div>
+      <div class="form-field"><label for="marca">Marca</label><input id="marca" formControlName="marca" placeholder="Toyota" />@if (fieldError('marca') || (form.controls.marca.touched && form.controls.marca.invalid)) { <span class="field-error">{{ fieldError('marca') || 'Ingresa la marca del vehículo.' }}</span> }</div>
+      <div class="form-field"><label for="modelo">Modelo</label><input id="modelo" formControlName="modelo" placeholder="Corolla" />@if (fieldError('modelo') || (form.controls.modelo.touched && form.controls.modelo.invalid)) { <span class="field-error">{{ fieldError('modelo') || 'Ingresa el modelo del vehículo.' }}</span> }</div>
+      <div class="form-field"><label for="anio">Año</label><input id="anio" type="number" min="1990" max="2027" formControlName="anio" />@if (fieldError('anio') || (form.controls.anio.touched && form.controls.anio.invalid)) { <span class="field-error">{{ fieldError('anio') || 'El año debe estar entre 1990 y 2027.' }}</span> }</div>
+      <div class="form-field form-field-wide"><label for="clienteId">Propietario</label><select id="clienteId" formControlName="clienteId"><option [ngValue]="0" disabled>Selecciona un cliente</option>@for (client of clientes; track client.id) { <option [ngValue]="client.id">{{ client.nombres }} · {{ client.documento }}</option> }</select>@if (fieldError('clienteId') || (form.controls.clienteId.touched && form.controls.clienteId.invalid)) { <span class="field-error">{{ fieldError('clienteId') || 'Selecciona un cliente.' }}</span> }</div>
+      <div class="modal-actions"><button class="button button-quiet" type="button" (click)="closeForm()">Cancelar</button><button class="button button-primary" type="submit" [disabled]="saving || clientes.length === 0">{{ saving ? 'Guardando…' : editingId === null ? 'Registrar vehículo' : 'Guardar cambios' }}</button></div>
+    </form>
+  </section></div>
+}

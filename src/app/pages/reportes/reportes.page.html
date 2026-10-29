@@ -1,0 +1,36 @@
+<div class="page-heading">
+  <div><span class="eyebrow">ANÁLISIS DEL TALLER</span><h1>Ingresos por servicio</h1><p class="muted">Revisa el importe y el volumen de servicios realizados.</p></div>
+  <div class="report-mark">▥ <span>REPORTE API</span></div>
+</div>
+
+@if (error) { <div class="alert alert-error" role="alert">{{ error }}</div> }
+
+<section class="content-card report-filters">
+  <div class="card-toolbar"><div><h2>Periodo del reporte</h2><p class="muted">Selecciona un rango de fechas. Se excluyen órdenes anuladas.</p></div></div>
+  <form [formGroup]="filters" (ngSubmit)="search()" class="report-filter-form">
+    <div class="form-field"><label for="report-from">Desde</label><input id="report-from" type="date" formControlName="desde" /></div>
+    <span class="date-separator">hasta</span>
+    <div class="form-field"><label for="report-to">Hasta</label><input id="report-to" type="date" formControlName="hasta" /></div>
+    <button class="button button-primary button-small" type="submit">Aplicar filtros</button><button class="button button-quiet button-small" type="button" (click)="reset()">Limpiar</button>
+  </form>
+</section>
+
+<section class="report-highlight">
+  <div><span class="eyebrow eyebrow-light">INGRESO TOTAL DEL PERIODO</span><strong>{{ totalIngresos | currency:'PEN':'symbol':'1.2-2' }}</strong><small>Calculado por el reporte agregado del backend</small></div>
+  <span class="report-highlight-icon">S/</span>
+</section>
+
+<section class="content-card report-table-card">
+  <div class="card-toolbar"><div><h2>Desglose por servicio</h2><p class="muted">Ordenado por importe total de mayor a menor.</p></div><span class="results-pill">{{ rows.length }} servicios</span></div>
+  @if (loading) {
+    <div class="loading-state"><span class="spinner"></span> Generando reporte…</div>
+  } @else if (rows.length === 0) {
+    <div class="empty-inline"><span class="empty-icon">▥</span><strong>Sin ingresos para este periodo</strong><small>Prueba con un rango de fechas diferente.</small></div>
+  } @else {
+    <div class="table-wrap"><table><thead><tr><th>SERVICIO</th><th>VECES REALIZADO</th><th>IMPORTE TOTAL</th><th>PARTICIPACIÓN</th></tr></thead>
+      <tbody>@for (row of rows; track row.codigo) {
+        <tr><td><div class="service-cell"><span class="service-code">{{ row.codigo }}</span><strong>{{ row.servicio }}</strong></div></td><td>{{ row.cantidadTotal }}</td><td class="price-cell">{{ row.importeTotal | currency:'PEN':'symbol':'1.2-2' }}</td><td><div class="report-bar-wrap"><span class="report-bar"><span [style.width.%]="totalIngresos ? row.importeTotal / totalIngresos * 100 : 0"></span></span><small>{{ (totalIngresos ? row.importeTotal / totalIngresos * 100 : 0) | number:'1.0-0' }}%</small></div></td></tr>
+      }</tbody>
+    </table></div>
+  }
+</section>

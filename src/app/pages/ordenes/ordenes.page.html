@@ -1,0 +1,52 @@
+<div class="page-heading">
+  <div><span class="eyebrow">ATENCIÓN AL CLIENTE</span><h1>Órdenes de servicio</h1><p class="muted">Consulta y da seguimiento a las órdenes del taller.</p></div>
+  @if (auth.hasPermission('ORDEN_REGISTRAR')) { <a class="button button-primary" routerLink="/ordenes/nueva"><span>＋</span> Nueva orden</a> }
+</div>
+
+@if (error) { <div class="alert alert-error" role="alert">{{ error }}</div> }
+
+<section class="content-card filters-card">
+  <div class="card-toolbar filter-title"><div><h2>Buscar órdenes</h2><p class="muted">Combina uno o varios filtros para encontrar una atención.</p></div></div>
+  <form class="filters-form" [formGroup]="filters" (ngSubmit)="search()">
+    <div class="form-field"><label for="filter-plate">Placa</label><input id="filter-plate" formControlName="placa" placeholder="ABC-123" /></div>
+    <div class="form-field"><label for="filter-state">Estado</label><select id="filter-state" formControlName="estado"><option value="">Todos los estados</option><option value="REGISTRADA">Registrada</option><option value="ANULADA">Anulada</option></select></div>
+    <div class="form-field"><label for="filter-from">Desde</label><input id="filter-from" type="date" formControlName="desde" /></div>
+    <div class="form-field"><label for="filter-to">Hasta</label><input id="filter-to" type="date" formControlName="hasta" /></div>
+    <div class="filter-actions"><button class="button button-primary button-small" type="submit">Buscar <span>⌕</span></button><button class="button button-quiet button-small" type="button" (click)="resetFilters()">Limpiar</button></div>
+  </form>
+</section>
+
+<section class="content-card orders-card">
+  <div class="card-toolbar"><div><h2>Historial de órdenes</h2><p class="muted">{{ ordenes.length }} resultados</p></div><span class="sort-label">Más recientes primero ↓</span></div>
+  @if (loading) {
+    <div class="loading-state"><span class="spinner"></span> Consultando órdenes…</div>
+  } @else if (ordenes.length === 0) {
+    <div class="empty-inline"><span class="empty-icon">▤</span><strong>No encontramos órdenes</strong><small>Prueba con otros filtros o registra una nueva atención.</small></div>
+  } @else {
+    <div class="table-wrap"><table>
+      <thead><tr><th>ORDEN</th><th>VEHÍCULO</th><th>FECHA</th><th>SERVICIOS</th><th>TOTAL</th><th>ESTADO</th><th></th></tr></thead>
+      <tbody>@for (order of ordenes; track order.id) {
+        <tr><td><button class="order-number" type="button" (click)="showDetails(order)">{{ order.numero }}</button><small class="table-subtext">{{ order.usuarioRegistro }}</small></td><td><strong>{{ order.placa }}</strong><small class="table-subtext">{{ order.clienteNombre }}</small></td><td>{{ order.fecha | date:'dd MMM yyyy, HH:mm' }}</td><td>{{ order.detalles.length }} {{ order.detalles.length === 1 ? 'servicio' : 'servicios' }}</td><td class="price-cell">{{ order.total | currency:'PEN':'symbol':'1.2-2' }}</td><td><span class="status-badge" [class.status-active]="order.estado === 'REGISTRADA'" [class.status-inactive]="order.estado === 'ANULADA'"><span></span>{{ order.estado === 'REGISTRADA' ? 'Registrada' : 'Anulada' }}</span></td><td><div class="row-actions"><button class="icon-button" type="button" title="Ver detalle" aria-label="Ver detalle" (click)="showDetails(order)">↗</button>@if (auth.hasPermission('ORDEN_ANULAR') && order.estado === 'REGISTRADA') { <button class="text-button text-danger" type="button" (click)="openAnnul(order)">Anular</button> }</div></td></tr>
+      }</tbody>
+    </table></div>
+  }
+</section>
+
+@if (selectedOrder) {
+  <div class="modal-backdrop" (click)="closeModals()"><section class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="order-detail-title" (click)="$event.stopPropagation()">
+    <div class="modal-heading"><div><span class="eyebrow">DETALLE DE ATENCIÓN</span><h2 id="order-detail-title">{{ selectedOrder.numero }}</h2></div><button class="icon-button" type="button" aria-label="Cerrar" (click)="closeModals()">×</button></div>
+    <div class="order-detail-meta"><div><small>VEHÍCULO</small><strong>{{ selectedOrder.placa }}</strong></div><div><small>PROPIETARIO</small><strong>{{ selectedOrder.clienteNombre }}</strong></div><div><small>KILOMETRAJE</small><strong>{{ selectedOrder.kilometraje | number }} km</strong></div><div><small>ESTADO</small><strong>{{ selectedOrder.estado }}</strong></div></div>
+    <div class="table-wrap detail-table"><table><thead><tr><th>SERVICIO</th><th>CANTIDAD</th><th>PRECIO</th><th>SUBTOTAL</th></tr></thead><tbody>@for (line of selectedOrder.detalles; track line.id) { <tr><td>{{ line.codigo }} · {{ line.servicio }}</td><td>{{ line.cantidad }}</td><td>{{ line.precioUnitario | currency:'PEN':'symbol':'1.2-2' }}</td><td>{{ line.subtotal | currency:'PEN':'symbol':'1.2-2' }}</td> }</tbody></table></div>
+    <div class="detail-total"><span>Total de la orden</span><strong>{{ selectedOrder.total | currency:'PEN':'symbol':'1.2-2' }}</strong></div>
+    @if (selectedOrder.motivoAnulacion) { <div class="inline-note">Motivo de anulación: {{ selectedOrder.motivoAnulacion }}</div> }
+  </section></div>
+}
+
+@if (annulOrder) {
+  <div class="modal-backdrop" (click)="closeModals()"><section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="annul-title" (click)="$event.stopPropagation()">
+    <div class="modal-heading"><div><span class="eyebrow">CAMBIO DE ESTADO</span><h2 id="annul-title">Anular {{ annulOrder.numero }}</h2></div><button class="icon-button" type="button" aria-label="Cerrar" (click)="closeModals()">×</button></div>
+    @if (modalError) { <div class="alert alert-error" role="alert">{{ modalError }}</div> }
+    <div class="form-field"><label for="annul-reason">Motivo de anulación</label><textarea id="annul-reason" [value]="motivo" (input)="motivo = $any($event.target).value" rows="4" maxlength="200" placeholder="Describe el motivo (mínimo 10 caracteres)"></textarea><small>{{ motivo.length }}/200 caracteres</small>@if (modalFieldErrors['motivo']) { <span class="field-error">{{ modalFieldErrors['motivo'] }}</span> }</div>
+    <div class="modal-actions"><button class="button button-quiet" type="button" (click)="closeModals()">Cancelar</button><button class="button button-danger" type="button" [disabled]="saving || motivo.trim().length < 10" (click)="annul()">{{ saving ? 'Anulando…' : 'Confirmar anulación' }}</button></div>
+  </section></div>
+}

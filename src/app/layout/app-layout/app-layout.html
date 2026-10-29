@@ -1,0 +1,48 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" routerLink="/">
+      <span class="brand-mark">A</span>
+      <span>AutoAndes<span class="brand-dot">.</span></span>
+    </a>
+
+    <div class="sidebar-caption">ESPACIO DE TRABAJO</div>
+    <nav class="main-nav" aria-label="Navegación principal">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="nav-icon">⌂</span><span>Inicio</span>
+      </a>
+      @if (auth.hasPermission('SERVICIO_LEER')) {
+        <a routerLink="/servicios" routerLinkActive="active"><span class="nav-icon">◈</span><span>Servicios</span></a>
+      }
+      @if (auth.hasPermission('VEHICULO_LEER')) {
+        <a routerLink="/vehiculos" routerLinkActive="active"><span class="nav-icon">▱</span><span>Vehículos</span></a>
+      }
+      @if (auth.hasPermission('ORDEN_LEER')) {
+        <a routerLink="/ordenes" routerLinkActive="active"><span class="nav-icon">▤</span><span>Órdenes de servicio</span></a>
+      }
+      @if (auth.hasPermission('ORDEN_REGISTRAR')) {
+        <a class="nav-subitem" routerLink="/ordenes/nueva" routerLinkActive="active"><span class="nav-icon">＋</span><span>Nueva orden</span></a>
+      }
+      @if (auth.hasPermission('REPORTE_VER')) {
+        <div class="sidebar-caption sidebar-caption-lower">ANÁLISIS</div>
+        <a routerLink="/reportes" routerLinkActive="active"><span class="nav-icon">▥</span><span>Ingresos por servicio</span></a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="connection-indicator"><span></span> API AutoAndes</div>
+      <div class="user-card">
+        <span class="avatar">{{ auth.userName().charAt(0) || 'A' }}</span>
+        <span class="user-meta"><strong>{{ auth.userName() }}</strong><small>{{ auth.roles().join(' · ') }}</small></span>
+        <button class="icon-button logout-button" type="button" aria-label="Cerrar sesión" title="Cerrar sesión" (click)="auth.logout()">↪</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar">
+      <div class="topbar-label"><span class="topbar-dot"></span> OPERACIONES</div>
+      <div class="topbar-user"><span>Sesión segura</span><span class="secure-mark">✓</span></div>
+    </header>
+    <section class="page-content"><router-outlet /></section>
+  </main>
+</div>
